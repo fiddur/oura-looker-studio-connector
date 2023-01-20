@@ -1,11 +1,13 @@
 {
   "dependencies": {
+
     "libraries": [
       {
         "userSymbol": "OAuth2",
         "libraryId": "1B7FSrk5Zi6L1rSxxTDgDEUsPzlukDsi4KGuTMorsTQHhGBzBkMun4iDF",
         "version": "33"
       }
+
     ]
   },
   "dataStudio": {
@@ -16,8 +18,7 @@
     "addonUrl": "addonUrl",
     "supportUrl": "supportUrl",
     "description": "description",
-    "sources": [
-      ""
-    ]
-  }
+    "sources": []
+  },
+  "runtimeVersion": "V8"
 }

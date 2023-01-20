@@ -4,7 +4,11 @@ specifiers:
   '@google/clasp': ^2.1.0
   '@google/dscc-scripts': ^1.0.17
   '@types/google-apps-script': ^0.0.48
+  '@types/google-apps-script-oauth2': ^38.0.0
   prettier: ^1.16.4
+
+dependencies:
+  '@types/google-apps-script-oauth2': 38.0.0
 
 devDependencies:
   '@google/clasp': 2.2.1
@@ -137,9 +141,14 @@ packages:
       '@types/node': 18.11.18
     dev: true
 
+  /@types/google-apps-script-oauth2/38.0.0:
+    resolution: {integrity: sha512-TxaCxXmAb3/Qm/kSweW+PPIckNwLvZo6maGI0oKx/MBdl/WrZkPAY7Mi56qg2xPGBObqG80rmYU691SAHiUdJg==}
+    dependencies:
+      '@types/google-apps-script': 0.0.48
+    dev: false
+
   /@types/google-apps-script/0.0.48:
     resolution: {integrity: sha512-0hZKXzpZZpCWdIVFYLQWdrH2JTo7t2SkozIZ0yb9YdGFUvEeFXf93PjUMMZ4p/WAgM/ftL505oqZ+riA6pYY2Q==}
-    dev: true
 
   /@types/keyv/3.1.4:
     resolution: {integrity: sha512-BQ5aZNSCpj7D6K2ksrRCTmKRLEpnPvWDiLPfoGyhZ++8YtiK9d/3DBKPJgry359X/P1PfruyYwvnvwFjuEiEIg==}

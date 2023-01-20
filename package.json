@@ -28,5 +28,8 @@
     "@google/dscc-scripts": "^1.0.17",
     "@types/google-apps-script": "^0.0.48",
     "prettier": "^1.16.4"
+  },
+  "dependencies": {
+    "@types/google-apps-script-oauth2": "^38.0.0"
   }
 }

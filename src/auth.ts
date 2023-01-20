@@ -17,12 +17,10 @@ const getAuthType = (): GetAuthTypeResponse => {
 }
 
 // https://developers.google.com/datastudio/connector/auth#get3pauthorizationurls
-function get3PAuthorizationUrls() {
-  return getOAuthService().getAuthorizationUrl()
-}
+const get3PAuthorizationUrls = () => getOAuthService().getAuthorizationUrl()
 
 // https://developers.google.com/datastudio/connector/auth#authcallback
-function authCallback(request) {
+const authCallback = (request: object) => {
   const authorized = getOAuthService().handleCallback(request)
   if (authorized) {
     return HtmlService.createHtmlOutput('Success! You can close this tab.')
@@ -69,15 +67,6 @@ function checkConfiguration() {
   }
   if (!scriptProperties.getProperty(CLIENT_ID_PROPERTY_NAME)) {
     errors.push('Set the "' + CLIENT_ID_PROPERTY_NAME + '" script property for this project.')
-  }
-  if (SERVICE_NAME === 'your-service-name') {
-    errors.push('Set the "SERVICE_NAME" variable.')
-  }
-  if (AUTHORIZATION_BASE_URL === 'your-authorization-base-url') {
-    errors.push('Set the "AUTHORIZATION_BASE_URL" variable.')
-  }
-  if (TOKEN_URL === 'your-token-url') {
-    errors.push('Set the "TOKEN_URL" variable.')
   }
   if (errors.length !== 0) {
     cc.newDebugError()
