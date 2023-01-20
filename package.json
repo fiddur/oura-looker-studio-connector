@@ -9,8 +9,24 @@
   ],
   "author": "Fredrik Liljegren <fredrik@liljegren.org>",
   "license": "ISC",
-  "dependencies": {
-    "@google/dscc-gen": "^2.0.31",
-    "@google/dscc-scripts": "^1.0.17"
+  "scripts": {
+    "prettier": "prettier --write \"src/**/*.js\"",
+    "push": "dscc-scripts connector push_changes",
+    "watch": "dscc-scripts connector watch_changes",
+    "open": "dscc-scripts connector open_script",
+    "open_template": "dscc-scripts connector open_template",
+    "try_production": "dscc-scripts connector try_production",
+    "try_latest": "dscc-scripts connector try_latest",
+    "update_production": "dscc-scripts connector update_production"
+  },
+  "dsccConnector": {
+    "production": "AKfycbxSwp4YexfeMWw_dY2-KcD1-K81s190NtWlgBvL0J6qmaDsNMZWBBxQh7g-GPugmmW5pA",
+    "latest": "AKfycbywGvp-PsH5_UWEln2HhlITZabhXqQrHgrFFlq_8z7p"
+  },
+  "devDependencies": {
+    "@google/clasp": "^2.1.0",
+    "@google/dscc-scripts": "^1.0.17",
+    "@types/google-apps-script": "^0.0.48",
+    "prettier": "^1.16.4"
   }
 }
