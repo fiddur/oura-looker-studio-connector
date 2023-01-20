@@ -1,0 +1,16 @@
+{
+  "name": "oura-looker-studio-connector",
+  "version": "1.0.0",
+  "description": "Reading data from Oura in Looker Studio",
+  "main": "none",
+  "keywords": [
+    "oura",
+    "googlelookerstudio"
+  ],
+  "author": "Fredrik Liljegren <fredrik@liljegren.org>",
+  "license": "ISC",
+  "dependencies": {
+    "@google/dscc-gen": "^2.0.31",
+    "@google/dscc-scripts": "^1.0.17"
+  }
+}
