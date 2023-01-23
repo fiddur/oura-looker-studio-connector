@@ -1,4 +1,4 @@
-const cc = DataStudioApp.createCommunityConnector()
+//const cc = DataStudioApp.createCommunityConnector()
 const CLIENT_ID_PROPERTY_NAME = 'OAUTH_CLIENT_ID'
 const CLIENT_SECRET_PROPERTY_NAME = 'OAUTH_CLIENT_SECRET'
 
