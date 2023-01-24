@@ -5,8 +5,9 @@
     "moduleResolution": "node",
     "target": "es2021",
     "sourceMap": true,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "types": ["google-apps-script"]
   },
   "compileOnSave": true,
-  "include": ["src"]
+  "include": ["src", "test"]
 }

@@ -16,6 +16,26 @@ const getConfig = (): GetConfigResponse => {
   return config.build()
 }
 
+const readinessData: Record<string, string> = {
+  readiness: 'score',
+  'readiness.activity_balance': 'contributors.activity_balance',
+  'readiness.body_temperature': 'contributors.body_temperature',
+  'readiness.hrv_balance': 'contributors.hrv_balance',
+  'readiness.previous_day_activity': 'contributors.previous_day_activity',
+  'readiness.previous_night': 'contributors.previous_night',
+  'readiness.recovery_index': 'contributors.recovery_index',
+  'readiness.resting_heart_rate': 'contributors.resting_heart_rate',
+  'readiness.sleep_balance': 'contributors.sleep_balance',
+  'readiness.temperature_deviation': 'temperature_deviation',
+  'readiness.temperature_trend_deviation': 'temperature_trend_deviation',
+}
+
+const titleCase = (key: string) =>
+  key
+    .split(/[\._]/)
+    .map(w => w.replace(w[0], w[0].toUpperCase()))
+    .join(' ')
+
 type Fields = GoogleAppsScript.Data_Studio.Fields
 const getFields = (): Fields => {
   const fields = cc.getFields()
@@ -28,12 +48,14 @@ const getFields = (): Fields => {
     .setName('Date')
     .setType(types.YEAR_MONTH_DAY)
 
-  fields
-    .newMetric()
-    .setId('readiness')
-    .setName('Readiness')
-    .setType(types.NUMBER)
-    .setAggregation(aggregations.AVG)
+  Object.keys(readinessData).forEach(key =>
+    fields
+      .newMetric()
+      .setId(key)
+      .setName(key === 'readiness' ? 'Readiness' : titleCase(key))
+      .setType(types.NUMBER)
+      .setAggregation(aggregations.AVG),
+  )
 
   return fields
 }
@@ -55,27 +77,32 @@ const getData = (request: GetDataRequest): GetDataResponse => {
     const { access_token } = getOAuthService().getToken() as Token
     const { startDate, endDate } = request.dateRange
 
+    const requestedFieldNames = request.fields.map(({ name }) => name)
+
+    console.log({ requestedFieldNames })
+
+    // Readiness
     const url = `https://api.ouraring.com/v2/usercollection/daily_readiness?start_date=${startDate}&end_date=${endDate}`
-
-    // console.log('Fetching', url)
-
-    // Calling `UrlFetchApp.fetch()` makes this connector require authentication.
     const response = UrlFetchApp.fetch(url, { headers: { Authorization: `Bearer ${access_token}` } })
 
-    const requestedFieldNames = request.fields.map(({ name }) => name)
-    const requestedFields = getFields().forIds(requestedFieldNames)
+    const rows = JSON.parse(response.getContentText()).data.map(readiness => ({
+      values: requestedFieldNames.map(field => {
+        if (field === 'day') return readiness.day.split('-').join('')
+        if (field === 'readiness') return readiness.score
 
-    const rows = JSON.parse(response.getContentText()).data.map(({ day, score }) => ({
-      values: [
-        requestedFieldNames.includes('day') && day.split('-').join(''),
-        requestedFieldNames.includes('readiness') && score,
-      ].filter(Boolean),
+        if (readinessData[field].includes('.')) {
+          const [a, b] = readinessData[field].split('.')
+          return readiness[a][b]
+        } else return readiness[readinessData[field]]
+      }),
     }))
 
-    // console.log('Rows', rows)
+    console.log('Rows', rows)
 
     return {
-      schema: requestedFields.build(),
+      schema: getFields()
+        .forIds(requestedFieldNames)
+        .build(),
       rows,
     }
   } catch (e) {
@@ -87,5 +114,8 @@ const getData = (request: GetDataRequest): GetDataResponse => {
         'The connector has encountered an unrecoverable error. Please try again later, or file an issue if this error persists.',
       )
       .throwException()
+    return { schema: [], rows: [] }
   }
 }
+
+export { getConfig, getSchema, getData }
