@@ -35,8 +35,6 @@ const getFields = (): Fields => {
     .setType(types.NUMBER)
     .setAggregation(aggregations.AVG)
 
-  console.log('Fields are', fields)
-
   return fields
 }
 
@@ -57,20 +55,24 @@ const getData = (request: GetDataRequest): GetDataResponse => {
     const { access_token } = getOAuthService().getToken() as Token
     const { startDate, endDate } = request.dateRange
 
-    console.log('DateRange', startDate, endDate)
+    const url = `https://api.ouraring.com/v2/usercollection/daily_readiness?start_date=${startDate}&end_date=${endDate}`
+
+    // console.log('Fetching', url)
 
     // Calling `UrlFetchApp.fetch()` makes this connector require authentication.
-    const response = UrlFetchApp.fetch(
-      `https://api.ouraring.com/v2/usercollection/daily_readiness?start_date=${startDate}&end_date=${endDate}`,
-      { headers: { Authorization: `Bearer ${access_token}` } },
-    )
+    const response = UrlFetchApp.fetch(url, { headers: { Authorization: `Bearer ${access_token}` } })
 
-    const requestedFields = getFields().forIds(request.fields.map(({ name }) => name))
+    const requestedFieldNames = request.fields.map(({ name }) => name)
+    const requestedFields = getFields().forIds(requestedFieldNames)
+
     const rows = JSON.parse(response.getContentText()).data.map(({ day, score }) => ({
-      values: [day.split('-').join(''), score],
+      values: [
+        requestedFieldNames.includes('day') && day.split('-').join(''),
+        requestedFieldNames.includes('readiness') && score,
+      ].filter(Boolean),
     }))
 
-    console.log('Rows', rows)
+    // console.log('Rows', rows)
 
     return {
       schema: requestedFields.build(),
