@@ -58,6 +58,15 @@ const dataFields: Record<string, string> = {
   'activity.total_calories': 'activity.total_calories',
   'activity.training_frequency': 'activity.contributors.training_frequency',
   'activity.training_volume': 'activity.contributors.training_volume',
+
+  'sleep.score': 'sleep.score',
+  'sleep.deep_sleep': 'sleep.contributors.deep_sleep',
+  'sleep.efficiency': 'sleep.contributors.efficiency',
+  'sleep.latency': 'sleep.contributors.latency',
+  'sleep.rem_sleep': 'sleep.contributors.rem_sleep',
+  'sleep.restfulness': 'sleep.contributors.restfulness',
+  'sleep.timing': 'sleep.contributors.timing',
+  'sleep.total_sleep': 'sleep.contributors.total_sleep',
 }
 
 const titleCase = (key: string) =>
@@ -101,31 +110,30 @@ type Token = {
   granted_time: number
 }
 
-type ReadinessDay = {
-  id: string
-  contributors: {
-    activity_balance?: number
-    body_temperature?: number
-    hrv_balance?: number
-    previous_day_activity?: number
-    previous_night?: number
-    recovery_index?: number
-    resting_heart_rate?: number
-    sleep_balance?: number
-  }
-  day: string
-  score?: number
-  temperature_deviation?: number
-  temperature_trend_deviation?: number
-  timestamp: string
-}
-
-type ActivityDay = {
+type DataDay = {
   id: string
   contributors: Record<string, number>
   day: string
   timestamp: string
 } & Record<string, number>
+
+const addData = (
+  data: Record<string, Record<string, DataDay>>,
+  dataType: string,
+  startDate: string,
+  endDate: string,
+  access_token: string,
+) => {
+  const url = `https://api.ouraring.com/v2/usercollection/daily_${dataType}?start_date=${startDate}&end_date=${endDate}`
+  console.log(`Reading ${dataType} from ${url}`)
+  const response = UrlFetchApp.fetch(url, { headers: { Authorization: `Bearer ${access_token}` } })
+
+  const { data: dataDays }: { data: DataDay[] } = JSON.parse(response.getContentText())
+  dataDays.forEach(dataDay => {
+    if (!(dataDay.day in data)) data[dataDay.day] = {}
+    data[dataDay.day][dataType] = dataDay
+  })
+}
 
 // https://developers.google.com/datastudio/connector/reference#getdata
 const getData = (request: GetDataRequest): GetDataResponse => {
@@ -137,33 +145,12 @@ const getData = (request: GetDataRequest): GetDataResponse => {
 
     console.log({ requestedFieldNames })
 
-    const data = {} // data by day for each subpart
-
-    // Readiness
-    if (requestedFieldNames.filter(name => name.startsWith('readiness')).length > 0) {
-      const url = `https://api.ouraring.com/v2/usercollection/daily_readiness?start_date=${startDate}&end_date=${endDate}`
-      console.log(`Reading readiness from ${url}`)
-      const response = UrlFetchApp.fetch(url, { headers: { Authorization: `Bearer ${access_token}` } })
-
-      const { data: readinessDays }: { data: ReadinessDay[] } = JSON.parse(response.getContentText())
-      readinessDays.forEach(readinessDay => {
-        if (!(readinessDay.day in data)) data[readinessDay.day] = {}
-        data[readinessDay.day].readiness = readinessDay
-      })
-    }
-
-    // Activity
-    if (requestedFieldNames.filter(name => name.startsWith('activity')).length > 0) {
-      const url = `https://api.ouraring.com/v2/usercollection/daily_activity?start_date=${startDate}&end_date=${endDate}`
-      console.log(`Reading activity from ${url}`)
-      const response = UrlFetchApp.fetch(url, { headers: { Authorization: `Bearer ${access_token}` } })
-
-      const { data: activityDays }: { data: ActivityDay[] } = JSON.parse(response.getContentText())
-      activityDays.forEach(activityDay => {
-        if (!(activityDay.day in data)) data[activityDay.day] = {}
-        data[activityDay.day].activity = activityDay
-      })
-    }
+    const data: Record<string, Record<string, DataDay>> = {} // data by day for each subpart
+    ;['readiness', 'activity', 'sleep'].forEach(dataType => {
+      if (requestedFieldNames.filter(name => name.startsWith(dataType)).length > 0) {
+        addData(data, dataType, startDate, endDate, access_token)
+      }
+    })
 
     const rows = Object.keys(data)
       .sort()
