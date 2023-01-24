@@ -1,4 +1,3 @@
-//const cc = DataStudioApp.createCommunityConnector()
 const CLIENT_ID_PROPERTY_NAME = 'OAUTH_CLIENT_ID'
 const CLIENT_SECRET_PROPERTY_NAME = 'OAUTH_CLIENT_SECRET'
 
@@ -30,20 +29,13 @@ const authCallback = (request: object) => {
 }
 
 // https://developers.google.com/datastudio/connector/auth#isauthvalid
-function isAuthValid() {
-  return getOAuthService().hasAccess()
-}
+const isAuthValid = () => getOAuthService().hasAccess()
 
 // https://developers.google.com/datastudio/connector/auth#resetauth
-function resetAuth() {
-  getOAuthService().reset()
-}
+const resetAuth = () => getOAuthService().reset()
 
 // Helper function to get the configured OauthService.
-function getOAuthService() {
-  // Remove this call after setting the necessary config values.
-  checkConfiguration()
-
+const getOAuthService = () => {
   const scriptProps = PropertiesService.getScriptProperties()
 
   return OAuth2.createService(SERVICE_NAME)
@@ -53,24 +45,4 @@ function getOAuthService() {
     .setClientSecret(scriptProps.getProperty(CLIENT_SECRET_PROPERTY_NAME))
     .setPropertyStore(PropertiesService.getUserProperties())
     .setCallbackFunction('authCallback')
-}
-
-// TODO - remove this function, (and it's invocation on line 47) after setting
-// the `OAUTH_CLIENT_ID`, & `OAUTH_CLIENT_SECRET` values in your script
-// properties and the SERVICE_NAME, AUTHORIZATION_BASE_URL, & TOKEN_URL
-// variables.
-function checkConfiguration() {
-  const scriptProperties = PropertiesService.getScriptProperties()
-  const errors = []
-  if (!scriptProperties.getProperty(CLIENT_ID_PROPERTY_NAME)) {
-    errors.push('Set the "' + CLIENT_ID_PROPERTY_NAME + '" script property for this project.')
-  }
-  if (!scriptProperties.getProperty(CLIENT_ID_PROPERTY_NAME)) {
-    errors.push('Set the "' + CLIENT_ID_PROPERTY_NAME + '" script property for this project.')
-  }
-  if (errors.length !== 0) {
-    cc.newDebugError()
-      .setText(errors.join(' '))
-      .throwException()
-  }
 }

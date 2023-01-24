@@ -35,36 +35,50 @@ const getFields = (): Fields => {
     .setType(types.NUMBER)
     .setAggregation(aggregations.AVG)
 
+  console.log('Fields are', fields)
+
   return fields
 }
 
 // https://developers.google.com/datastudio/connector/reference#getschema
 const getSchema = (): GetSchemaResponse => ({ schema: getFields().build() })
 
+type Token = {
+  access_token: string
+  token_type: 'Bearer'
+  expires_in: number
+  refresh_token: string
+  granted_time: number
+}
+
 // https://developers.google.com/datastudio/connector/reference#getdata
 const getData = (request: GetDataRequest): GetDataResponse => {
   try {
+    const { access_token } = getOAuthService().getToken() as Token
     const { startDate, endDate } = request.dateRange
-    const token = getOAuthService().getToken()
+
+    console.log('DateRange', startDate, endDate)
 
     // Calling `UrlFetchApp.fetch()` makes this connector require authentication.
     const response = UrlFetchApp.fetch(
       `https://api.ouraring.com/v2/usercollection/daily_readiness?start_date=${startDate}&end_date=${endDate}`,
-      { headers: { Authorization: `Bearer ${token}` } },
+      { headers: { Authorization: `Bearer ${access_token}` } },
     )
 
-    console.log(response)
-
     const requestedFields = getFields().forIds(request.fields.map(({ name }) => name))
-    const rows = JSON.parse(response.getContentText()).data.map(({ day, score }) => [day, score])
+    const rows = JSON.parse(response.getContentText()).data.map(({ day, score }) => ({
+      values: [day.split('-').join(''), score],
+    }))
 
-    console.log({ schema: requestedFields.build(), rows })
+    console.log('Rows', rows)
 
     return {
       schema: requestedFields.build(),
       rows,
     }
   } catch (e) {
+    console.error(e)
+
     cc.newUserError()
       .setDebugText('Error fetching data from API. Exception details: ' + e)
       .setText(
