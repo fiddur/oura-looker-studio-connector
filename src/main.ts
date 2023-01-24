@@ -125,7 +125,7 @@ const addData = (
   access_token: string,
 ) => {
   const url = `https://api.ouraring.com/v2/usercollection/daily_${dataType}?start_date=${startDate}&end_date=${endDate}`
-  console.log(`Reading ${dataType} from ${url}`)
+  // console.log(`Reading ${dataType} from ${url}`)
   const response = UrlFetchApp.fetch(url, { headers: { Authorization: `Bearer ${access_token}` } })
 
   const { data: dataDays }: { data: DataDay[] } = JSON.parse(response.getContentText())
@@ -143,7 +143,7 @@ const getData = (request: GetDataRequest): GetDataResponse => {
 
     const requestedFieldNames = request.fields.map(({ name }) => name)
 
-    console.log({ requestedFieldNames })
+    // console.log({ requestedFieldNames })
 
     const data: Record<string, Record<string, DataDay>> = {} // data by day for each subpart
     ;['readiness', 'activity', 'sleep'].forEach(dataType => {
@@ -160,7 +160,7 @@ const getData = (request: GetDataRequest): GetDataResponse => {
         ),
       }))
 
-    console.log('Rows', rows)
+    // console.log('Rows', rows)
 
     return {
       schema: getFields()
