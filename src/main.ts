@@ -16,18 +16,48 @@ const getConfig = (): GetConfigResponse => {
   return config.build()
 }
 
-const readinessData: Record<string, string> = {
-  readiness: 'score',
-  'readiness.activity_balance': 'contributors.activity_balance',
-  'readiness.body_temperature': 'contributors.body_temperature',
-  'readiness.hrv_balance': 'contributors.hrv_balance',
-  'readiness.previous_day_activity': 'contributors.previous_day_activity',
-  'readiness.previous_night': 'contributors.previous_night',
-  'readiness.recovery_index': 'contributors.recovery_index',
-  'readiness.resting_heart_rate': 'contributors.resting_heart_rate',
-  'readiness.sleep_balance': 'contributors.sleep_balance',
-  'readiness.temperature_deviation': 'temperature_deviation',
-  'readiness.temperature_trend_deviation': 'temperature_trend_deviation',
+const pick = (obj: object, key: string[]) =>
+  key.length > 1 && obj[key[0]] ? pick(obj[key[0]], key.slice(1)) : obj[key[0]] || 0
+
+const dataFields: Record<string, string> = {
+  'readiness.score': 'readiness.score',
+  'readiness.activity_balance': 'readiness.contributors.activity_balance',
+  'readiness.body_temperature': 'readiness.contributors.body_temperature',
+  'readiness.hrv_balance': 'readiness.contributors.hrv_balance',
+  'readiness.previous_day_activity': 'readiness.contributors.previous_day_activity',
+  'readiness.previous_night': 'readiness.contributors.previous_night',
+  'readiness.recovery_index': 'readiness.contributors.recovery_index',
+  'readiness.resting_heart_rate': 'readiness.contributors.resting_heart_rate',
+  'readiness.sleep_balance': 'readiness.contributors.sleep_balance',
+  'readiness.temperature_deviation': 'readiness.temperature_deviation',
+  'readiness.temperature_trend_deviation': 'readiness.temperature_trend_deviation',
+
+  'activity.score': 'activity.score',
+  'activity.active_calories': 'activity.active_calories',
+  'activity.average_met_minutes': 'activity.average_met_minutes',
+  'activity.equivalent_walking_distance': 'activity.equivalent_walking_distance',
+  'activity.high_activity_met_minutes': 'activity.high_activity_met_minutes',
+  'activity.high_activity_time': 'activity.high_activity_time',
+  'activity.inactivity_alerts': 'activity.inactivity_alerts',
+  'activity.low_activity_met_minutes': 'activity.low_activity_met_minutes',
+  'activity.low_activity_time': 'activity.low_activity_time',
+  'activity.medium_activity_met_minutes': 'activity.medium_activity_met_minutes',
+  'activity.medium_activity_time': 'activity.medium_activity_time',
+  'activity.meet_daily_targets': 'activity.contributors.meet_daily_targets',
+  'activity.meters_to_target': 'activity.meters_to_target',
+  'activity.move_every_hour': 'activity.contributors.move_every_hour',
+  'activity.non_wear_time': 'activity.non_wear_time',
+  'activity.recovery_time': 'activity.contributors.recovery_time',
+  'activity.resting_time': 'activity.resting_time',
+  'activity.sedentary_met_minutes': 'activity.sedentary_met_minutes',
+  'activity.sedentary_time': 'activity.sedentary_time',
+  'activity.stay_active': 'activity.contributors.stay_active',
+  'activity.steps': 'activity.steps',
+  'activity.target_calories': 'activity.target_calories',
+  'activity.target_meters': 'activity.target_meters',
+  'activity.total_calories': 'activity.total_calories',
+  'activity.training_frequency': 'activity.contributors.training_frequency',
+  'activity.training_volume': 'activity.contributors.training_volume',
 }
 
 const titleCase = (key: string) =>
@@ -48,11 +78,11 @@ const getFields = (): Fields => {
     .setName('Date')
     .setType(types.YEAR_MONTH_DAY)
 
-  Object.keys(readinessData).forEach(key =>
+  Object.keys(dataFields).forEach(key =>
     fields
       .newMetric()
       .setId(key)
-      .setName(key === 'readiness' ? 'Readiness' : titleCase(key))
+      .setName(titleCase(key))
       .setType(types.NUMBER)
       .setAggregation(aggregations.AVG),
   )
@@ -71,6 +101,32 @@ type Token = {
   granted_time: number
 }
 
+type ReadinessDay = {
+  id: string
+  contributors: {
+    activity_balance?: number
+    body_temperature?: number
+    hrv_balance?: number
+    previous_day_activity?: number
+    previous_night?: number
+    recovery_index?: number
+    resting_heart_rate?: number
+    sleep_balance?: number
+  }
+  day: string
+  score?: number
+  temperature_deviation?: number
+  temperature_trend_deviation?: number
+  timestamp: string
+}
+
+type ActivityDay = {
+  id: string
+  contributors: Record<string, number>
+  day: string
+  timestamp: string
+} & Record<string, number>
+
 // https://developers.google.com/datastudio/connector/reference#getdata
 const getData = (request: GetDataRequest): GetDataResponse => {
   try {
@@ -81,21 +137,41 @@ const getData = (request: GetDataRequest): GetDataResponse => {
 
     console.log({ requestedFieldNames })
 
+    const data = {} // data by day for each subpart
+
     // Readiness
-    const url = `https://api.ouraring.com/v2/usercollection/daily_readiness?start_date=${startDate}&end_date=${endDate}`
-    const response = UrlFetchApp.fetch(url, { headers: { Authorization: `Bearer ${access_token}` } })
+    if (requestedFieldNames.filter(name => name.startsWith('readiness')).length > 0) {
+      const url = `https://api.ouraring.com/v2/usercollection/daily_readiness?start_date=${startDate}&end_date=${endDate}`
+      console.log(`Reading readiness from ${url}`)
+      const response = UrlFetchApp.fetch(url, { headers: { Authorization: `Bearer ${access_token}` } })
 
-    const rows = JSON.parse(response.getContentText()).data.map(readiness => ({
-      values: requestedFieldNames.map(field => {
-        if (field === 'day') return readiness.day.split('-').join('')
-        if (field === 'readiness') return readiness.score
+      const { data: readinessDays }: { data: ReadinessDay[] } = JSON.parse(response.getContentText())
+      readinessDays.forEach(readinessDay => {
+        if (!(readinessDay.day in data)) data[readinessDay.day] = {}
+        data[readinessDay.day].readiness = readinessDay
+      })
+    }
 
-        if (readinessData[field].includes('.')) {
-          const [a, b] = readinessData[field].split('.')
-          return readiness[a][b]
-        } else return readiness[readinessData[field]]
-      }),
-    }))
+    // Activity
+    if (requestedFieldNames.filter(name => name.startsWith('activity')).length > 0) {
+      const url = `https://api.ouraring.com/v2/usercollection/daily_activity?start_date=${startDate}&end_date=${endDate}`
+      console.log(`Reading activity from ${url}`)
+      const response = UrlFetchApp.fetch(url, { headers: { Authorization: `Bearer ${access_token}` } })
+
+      const { data: activityDays }: { data: ActivityDay[] } = JSON.parse(response.getContentText())
+      activityDays.forEach(activityDay => {
+        if (!(activityDay.day in data)) data[activityDay.day] = {}
+        data[activityDay.day].activity = activityDay
+      })
+    }
+
+    const rows = Object.keys(data)
+      .sort()
+      .map(day => ({
+        values: requestedFieldNames.map(field =>
+          field === 'day' ? day.split('-').join('') : pick(data[day], dataFields[field].split('.')),
+        ),
+      }))
 
     console.log('Rows', rows)
 
