@@ -12,12 +12,12 @@
   },
   "dataStudio": {
     "name": "oura-looker-studio-connector",
-    "logoUrl": "logoUrl",
+    "logoUrl": "https://static1.ouraring.com/web/favicons/apple-touch-icon.png",
     "company": "Fredrik Liljegren",
-    "companyUrl": "https://fredrik.liljegren.org/",
+    "companyUrl": "https://github.com/fiddur/oura-looker-studio-connector",
     "addonUrl": "addonUrl",
-    "supportUrl": "supportUrl",
-    "description": "description",
+    "supportUrl": "https://github.com/fiddur/oura-looker-studio-connector/issues",
+    "description": "Getting data from Oura API to Looker Studios",
     "sources": []
   },
   "runtimeVersion": "V8"
